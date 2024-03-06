@@ -50,6 +50,3 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
-
-# 내 프로젝트
-/app
