@@ -23,9 +23,10 @@ const char *vertexShaderSource ="#version 330 core\n"
 const char *fragmentShaderSource = "#version 330 core\n"
     "out vec4 FragColor;\n"
     "in vec3 ourColor;\n"
+    "uniform float ourBrightness;\n"
     "void main()\n"
     "{\n"
-    "   FragColor = vec4(ourColor, 1.0f);\n"
+    "   FragColor = ourBrightness * vec4(ourColor, 1.0f);\n"
     "}\n\0";
 
 int main()
@@ -141,6 +142,15 @@ int main()
         // input
         // -----
         processInput(window);
+
+        // change color
+        // ------
+
+        float timeValue = glfwGetTime();
+        float brightnessValue = static_cast<float>(sin(timeValue * 2.0f) + 0.5f);
+        int brightnessLocation = glGetUniformLocation(shaderProgram, "ourBrightness");
+        glUseProgram(shaderProgram);
+        glUniform1f(brightnessLocation, brightnessValue);
 
         // render
         // ------
