@@ -12,11 +12,11 @@
                 "-g",
                 "-I${workspaceFolder}/include",
                 "-L${workspaceFolder}/lib",
+                "${workspaceFolder}/include/glad/glad.c",
                 "${workspaceFolder}/src/${fileBasename}",
-                "${workspaceFolder}/src/glad.c",
                 "${workspaceFolder}/lib/libglfw.3.4.dylib",
                 "-o",
-                "${workspaceFolder}/bin/app.out",
+                "${workspaceFolder}/bin/${fileBasenameNoExtension}",
                 "-framework",
                 "OpenGL",
                 "-framework",
@@ -31,7 +31,7 @@
                 "-Wno-deprecated"
             ],
             "options": {
-                "cwd": "${fileDirname}"
+                "cwd": "${workspaceFolder}/src"
             },
             "problemMatcher": ["$gcc"],
             "group": {

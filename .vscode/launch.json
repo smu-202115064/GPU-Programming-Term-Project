@@ -6,8 +6,7 @@
       "type": "lldb",
       "request": "launch",
       "args": [],
-      "cwd": "${workspaceFolder}",
-      "program": "${workspaceFolder}/bin/app.out",
+      "program": "${workspaceFolder}/bin/${fileBasenameNoExtension}",
       "preLaunchTask": "C/C++: clang++ build active file"
     }
   ]
