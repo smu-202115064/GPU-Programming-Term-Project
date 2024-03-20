@@ -7,7 +7,7 @@
       "request": "launch",
       "args": [],
       "program": "${workspaceFolder}/bin/${fileBasenameNoExtension}",
-      "cwd": "${fileDirname}",
+      "cwd": "${workspaceFolder}",
       "preLaunchTask": "C/C++: clang++ build active file"
     }
   ]
