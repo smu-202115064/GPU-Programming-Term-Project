@@ -101,10 +101,13 @@ int main()
     // load and create a texture
     // -------------------------
     unsigned int texture1;
+    unsigned int texture2;
 
     // texture 1
     // ---------
     glGenTextures(1, &texture1);
+    glGenTextures(2, &texture2);
+
     glBindTexture(GL_TEXTURE_2D, texture1);
 
     // set the texture wrapping parameters
@@ -120,14 +123,29 @@ int main()
     stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
 
     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char* data = stbi_load("resources/textures/minecraft/grass.png", &width, &height, &nrChannels, STBI_rgb_alpha);
+    unsigned char* data;
+
+    data = stbi_load("resources/textures/minecraft/grass.png", &width, &height, &nrChannels, STBI_rgb_alpha);
     if (data)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D); // Mipmap 사용
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // texture 2
+    // ---------
+    glBindTexture(GL_TEXTURE_2D, texture2);
+
+    data = stbi_load("resources/textures/stone.jpg", &width, &height, &nrChannels, STBI_rgb);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D); // Mipmap 사용
     }
     else
     {
@@ -137,6 +155,7 @@ int main()
 
     ourShader.use();
     ourShader.setInt("texture1", 0); //glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0);
+    ourShader.setInt("texture2", 1);
 
     // render loop
     // -----------
@@ -168,6 +187,9 @@ int main()
         // bind textures on corresponding texture units
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
