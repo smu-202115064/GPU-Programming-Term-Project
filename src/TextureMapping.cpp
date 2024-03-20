@@ -1,6 +1,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <learnopengl/shader_s.h>
 #include <iostream>
 
@@ -53,12 +57,13 @@ int main()
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
+    int textureRepeats = 8;
     float vertices[] = {
         // positions          // colors           // texture coords
-         0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+         0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f * textureRepeats, 1.0f * textureRepeats, // top right
+         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f * textureRepeats, 0.0f, // bottom right
         -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
-        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left
+        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f * textureRepeats  // top left
     };
     unsigned int indices[] = {  // note that we start from 0!
         0, 1, 3,  // first Triangle
@@ -115,11 +120,14 @@ int main()
     stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
 
     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char* data = stbi_load("resources/textures/stone.jpg", &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load("resources/textures/minecraft/grass.png", &width, &height, &nrChannels, STBI_rgb_alpha);
     if (data)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D); // Mipmap 사용
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
     else
     {
@@ -140,6 +148,18 @@ int main()
 
         // render
         // ------
+
+
+        glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+        glm::mat4 trans = glm::mat4(1.0f);
+        float timeValue = glfwGetTime();
+        float rotateValue = static_cast<float>(sin(timeValue * 2.0f));
+
+        trans = glm::rotate(trans, glm::radians(180.0f * rotateValue), glm::vec3(0.0f, 1.0f, 0.0f));
+        vec = trans * vec;
+
+        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
         glClear(GL_COLOR_BUFFER_BIT);
         // render the triangle
