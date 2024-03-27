@@ -149,7 +149,7 @@ int main()
         float timeValue = glfwGetTime();
         float brightnessValue = static_cast<float>(sin(timeValue * 2.0f) + 0.5f);
         int brightnessLocation = glGetUniformLocation(shaderProgram, "ourBrightness");
-        glUseProgram(shaderProgram);
+        // glUseProgram(shaderProgram);
         glUniform1f(brightnessLocation, brightnessValue);
 
         // render
