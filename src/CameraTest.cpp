@@ -33,6 +33,9 @@ bool firstMouse = true;
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
+bool toggle_rotate[10] = { false };
+float angles[10] = { 0.0f };
+
 int main()
 {
     // glfw: initialize and configure
@@ -73,7 +76,7 @@ int main()
 
     // configure global opengl state
     // -----------------------------
-    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST); // 이걸 안하면 앞에 있는 것과 뒤에 있는 것이 섞임.
 
     // build and compile our shader zprogram
     // ------------------------------------
@@ -255,8 +258,13 @@ int main()
             // calculate the model matrix for each object and pass it to shader before drawing
             glm::mat4 model = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
             model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+
+            angles[i] += 18.0f * (i+1) * deltaTime;
+            if (toggle_rotate[i])
+                angles[i] += 256.0f * deltaTime;
+
+            glm::vec3 axis = glm::vec3(0.1f*(i+1), 0.02f*(i+1), -0.07f*(i+1));
+            model = glm::rotate(model, glm::radians(angles[i]), axis);
             ourShader.setMat4("model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -294,6 +302,10 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    for (int glfw_key = GLFW_KEY_0; glfw_key <= GLFW_KEY_9; glfw_key++) {
+        toggle_rotate[glfw_key-GLFW_KEY_0] = (glfwGetKey(window, glfw_key) == GLFW_PRESS);
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
