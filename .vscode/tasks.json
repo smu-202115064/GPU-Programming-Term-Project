@@ -16,6 +16,7 @@
                 "${workspaceFolder}/lib",
                 "${workspaceFolder}/include/glad/glad.c",
                 "${file}",
+                "${workspaceFolder}/lib/libassimp.dylib",
                 "${workspaceFolder}/lib/libglfw.3.dylib",
                 "-o",
                 "${workspaceFolder}/bin/${fileBasenameNoExtension}",
