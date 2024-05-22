@@ -12,6 +12,9 @@
 
 #include <iostream>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -20,8 +23,8 @@ unsigned int loadTexture(const char *path);
 void renderQuad();
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 800*2;
+const unsigned int SCR_HEIGHT = 600*2;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -48,7 +51,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH/2, SCR_HEIGHT/2, "LearnOpenGL", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -77,12 +80,12 @@ int main()
 
     // build and compile shaders
     // -------------------------
-    Shader shader("shader/4.normal_mapping.vs", "shader/4.normal_mapping.fs");
+    Shader shader("../shader/4.normal_mapping.vs", "../shader/4.normal_mapping.fs");
 
     // load textures
     // -------------
-    unsigned int diffuseMap = loadTexture("resources/textures/brickwall.jpg");
-    unsigned int normalMap  = loadTexture("resources/textures/brickwall_normal.jpg");
+    unsigned int diffuseMap = loadTexture("../resources/textures/brickwall.jpg");
+    unsigned int normalMap  = loadTexture("../resources/textures/brickwall_normal.jpg");
 
     // shader configuration
     // --------------------
