@@ -25,6 +25,8 @@ void processInput(GLFWwindow *window);
 // settings
 const unsigned int SCR_WIDTH = 800 * 2;
 const unsigned int SCR_HEIGHT = 600 * 2;
+const unsigned int DYN_ENV_WIDTH = 800;
+const unsigned int DYN_ENV_HEIGHT = 600;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 55.0f));
@@ -275,7 +277,22 @@ int main()
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     }
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-
+    glm::vec3 dynEnvFrontMats[6] = {
+        glm::vec3(1.0f,  0.0f,  0.0f),
+        glm::vec3(-1.0f,  0.0f,  0.0f),
+        glm::vec3(0.0f,  1.0f,  0.0f),
+        glm::vec3(0.0f, -1.0f,  0.0f),
+        glm::vec3(0.0f,  0.0f,  1.0f),
+        glm::vec3(0.0f,  0.0f, -1.0f),
+    };
+    glm::vec3 dynEnvUpMats[6] = {
+        glm::vec3(0.0f, 1.0f,  0.0f),
+        glm::vec3(0.0f, 1.0f,  0.0f),
+        glm::vec3(0.0f,  0.0f,  1.0f),
+        glm::vec3(0.0f,  0.0f, -1.0f),
+        glm::vec3(0.0f, 1.0f,  0.0f),
+        glm::vec3(0.0f, 1.0f,  0.0f),
+    };
 
     // shader configuration
     // --------------------
@@ -298,6 +315,12 @@ int main()
         // -----
         processInput(window);
 
+        // time stone 회전각 업데이트
+        timeStoneRotateAngle += timeStoneRotateSpeed * deltaTime;
+        while (timeStoneRotateAngle > 360.0f) {
+            timeStoneRotateAngle -= 360.0f;
+        }
+
         // render
         // ------
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -305,9 +328,7 @@ int main()
 
         // configure transformation matrices
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 skyboxView = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
-        glm::mat4 model;
+        glm::mat4 view;
 
         // time stone 회전각 업데이트
         timeStoneRotateAngle += timeStoneRotateSpeed * deltaTime;
@@ -324,6 +345,7 @@ int main()
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
             // 큐브맵 텍스처를 프레임 버퍼의 컬러 첨부물로 연결
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, dynEnvMapTextureID, 0);
+            view = glm::lookAt(camera.Position, camera.Position + dynEnvFrontMats[i], dynEnvUpMats[i]);
             // 큐브맵 렌더링
             renderDoctorStrange(drStrangeShader, drStrange, projection, view);
             renderTimeStone(timeStoneShader, timeStone, projection, view, timeStoneRotateAngle);
@@ -335,6 +357,7 @@ int main()
         glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
         // draw scene as normal
+        view = camera.GetViewMatrix();
         renderDoctorStrange(drStrangeShader, drStrange, projection, view);
         renderTimeStone(timeStoneShader, timeStone, projection, view, timeStoneRotateAngle);
         renderBrokenGlass(brokenGlassShader, projection, view, brokenGlassVAO, dynEnvMapTextureID, brokenGlassTexture);
