@@ -66,21 +66,26 @@ void renderTimeStone(Shader& shader, Model& model, const glm::mat4& projection, 
 }
 
 
-// void renderBrokenGlass(Shader& shader, Model& model, const glm::mat4& projection, const glm::mat4& view, const unsigned int dynEnvMapTextureID)
-// {
-//     return;
-//     glm::mat4 transform = glm::mat4(1.0f);
-//     transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 48.0f));
-//     transform = glm::scale(transform, glm::vec3(1000.0f, 1000.0f, 1.0f));
-//     shader.use();
-//     shader.setMat4("projection", projection);
-//     shader.setMat4("view", view);
-//     shader.setMat4("model", transform);
-//     shader.setInt("texture_diffuse1", 0);
-//     shader.setInt("texture_normal1", 1);
-//     shader.setInt("environmentMap", dynEnvMapTextureID);
-//     model.Draw(shader);
-// }
+void renderBrokenGlass(Shader& shader, const glm::mat4& projection, const glm::mat4& view, unsigned int brokenGlassVAO, unsigned int dynEnvMapTextureID, unsigned int brokenGlassTexture)
+{
+    glm::mat4 transform = glm::mat4(1.0f);
+    transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 40.0f));
+    transform = glm::scale(transform, glm::vec3(4.0f, 4.0f, 1.0f));
+    shader.use();
+    shader.setMat4("projection", projection);
+    shader.setMat4("view", view);
+    shader.setMat4("model", transform);
+    shader.setInt("environmentMap", 0);
+    shader.setInt("brokenGlassTexture", 1);
+
+    glBindVertexArray(brokenGlassVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, dynEnvMapTextureID);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, brokenGlassTexture);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glBindVertexArray(0);
+}
 
 
 void renderSkybox(Shader& shader, const glm::mat4& projection, const glm::mat4& view, unsigned int skyboxVAO, unsigned int skyboxTexture)
@@ -148,35 +153,42 @@ int main()
     Shader timeStoneShader("shader/timestone.vs", "shader/timestone.fs");
     Shader drStrangeShader("shader/dr-strange.vs", "shader/dr-strange.fs");
     Shader skyboxShader("shader/skybox.vs", "shader/skybox.fs");
-    // Shader brokenGlassShader("shader/broken-glass.vs", "shader/broken-glass.fs");
+    Shader brokenGlassShader("shader/broken-glass.vs", "shader/broken-glass.fs");
 
     // load models
     // -----------
     Model timeStone("resources/objects/timestone/timestone.obj");
     Model drStrange("resources/objects/dr-strange/Dr Strange.obj");
-    // Model brokenGlass("resources/textures/broken-glass/broken-glass.obj");
 
     // set up vertex data (and buffer(s)) and configure vertex attribute
-    //Model ourModel("resources/objects/backpack/backpack.obj");
+    // Model ourModel("resources/objects/backpack/backpack.obj");
 
     // ------------------------------------------------------------------
-    // float brokenGlassVerticies[] = {
-    //     // positions
-    //     -1.0f, -1.0f, 0.0f, // bottom left
-    //     1.0f, -1.0f, 0.0f, // bottom right
-    //     1.0f, 1.0f, 0.0f, // top right
-    //     -1.0f, 1.0f, 0.0f // top left
-    // };
+    float brokenGlassVerticies[] = {
+        // positions        // texture coords
+        -1.0f, -1.0f, 0.0f,  0.0f, 0.0f, // bottom left
+        1.0f, -1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+        1.0f, 1.0f, 0.0f,    1.0f, 1.0f, // top right
+        -1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left
+    };
 
-    // // broken glass VAO
-    // unsigned int brokenGlassVAO, brokenGlassVBO;
-    // glGenVertexArrays(1, &brokenGlassVAO);
-    // glGenBuffers(1, &brokenGlassVBO);
-    // glBindVertexArray(brokenGlassVAO);
-    // glBindBuffer(GL_ARRAY_BUFFER, brokenGlassVBO);
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(brokenGlassVerticies), &brokenGlassVerticies, GL_STATIC_DRAW);
+    // broken glass VAO
+    unsigned int brokenGlassVAO, brokenGlassVBO;
+    glGenVertexArrays(1, &brokenGlassVAO);
+    glGenBuffers(1, &brokenGlassVBO);
+    glBindVertexArray(brokenGlassVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, brokenGlassVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(brokenGlassVerticies), brokenGlassVerticies, GL_STATIC_DRAW);
 
-    // unsigned int brokenGlassTexture = loadTexture("resources/textures/broken-glass/WireReinforced_N.jpg");
+    // Position attribute
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+
+    // Texture coord attribute
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+    unsigned int brokenGlassTexture = loadTexture("resources/textures/broken-glass/WireReinforced_N.jpg");
 
     float skyboxVertices[] = {
         // positions
@@ -304,28 +316,28 @@ int main()
         }
 
         // Dynamic Environment Map Rendering
-        // glBindTexture(GL_TEXTURE_CUBE_MAP, dynEnvMapTextureID);
-        // for (unsigned int i = 0; i < 6; ++i)
-        // {
-        //     unsigned int framebuffer;
-        //     glGenFramebuffers(1, &framebuffer);
-        //     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        //     // 큐브맵 텍스처를 프레임 버퍼의 컬러 첨부물로 연결
-        //     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, dynEnvMapTextureID, 0);
-        //     // 큐브맵 렌더링
-        //     renderDoctorStrange(drStrangeShader, drStrange, projection, view);
-        //     renderTimeStone(timeStoneShader, timeStone, projection, view, timeStoneRotateAngle);
-        //     renderSkybox(skyboxShader, projection, skyboxView, skyboxVAO, skyboxTexture);
-        //     // 프레임 버퍼 정리
-        //     glDeleteFramebuffers(1, &framebuffer);
-        // }
-        // // 큐브맵 텍스처 언바인딩
-        // glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, dynEnvMapTextureID);
+        for (unsigned int i = 0; i < 6; ++i)
+        {
+            unsigned int framebuffer;
+            glGenFramebuffers(1, &framebuffer);
+            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+            // 큐브맵 텍스처를 프레임 버퍼의 컬러 첨부물로 연결
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, dynEnvMapTextureID, 0);
+            // 큐브맵 렌더링
+            renderDoctorStrange(drStrangeShader, drStrange, projection, view);
+            renderTimeStone(timeStoneShader, timeStone, projection, view, timeStoneRotateAngle);
+            renderSkybox(skyboxShader, projection, skyboxView, skyboxVAO, skyboxTexture);
+            // 프레임 버퍼 정리
+            glDeleteFramebuffers(1, &framebuffer);
+        }
+        // 큐브맵 텍스처 언바인딩
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
         // draw scene as normal
         renderDoctorStrange(drStrangeShader, drStrange, projection, view);
         renderTimeStone(timeStoneShader, timeStone, projection, view, timeStoneRotateAngle);
-        // renderBrokenGlass(brokenGlassShader, brokenGlass, projection, view, dynEnvMapTextureID);
+        renderBrokenGlass(brokenGlassShader, projection, view, brokenGlassVAO, dynEnvMapTextureID, brokenGlassTexture);
         renderSkybox(skyboxShader, projection, skyboxView, skyboxVAO, skyboxTexture);
 
 
