@@ -80,10 +80,12 @@ int main()
     // build and compile shaders
     // -------------------------
     Shader timeStoneShader("shader/timestone.vs", "shader/timestone.fs");
+    Shader drStrangeShader("shader/dr-strange.vs", "shader/dr-strange.fs");
 
     // load models
     // -----------
     Model timeStone("resources/objects/timestone/timestone.obj");
+    Model drStrange("resources/objects/dr-strange/Dr Strange.obj");
 
     // generate a large list of semi-random model transformation matrices
     // ------------------------------------------------------------------
@@ -114,12 +116,24 @@ int main()
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         glm::mat4 view = camera.GetViewMatrix();
 
+
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -8.0f, -4.0f));
+        model = glm::scale(model, glm::vec3(16.0f, 16.0f, 16.0f));
+
+        drStrangeShader.use();
+        drStrangeShader.setMat4("projection", projection);
+        drStrangeShader.setMat4("view", view);
+        drStrangeShader.setInt("texture_diffuse1", 0);
+        drStrangeShader.setMat4("model", model);
+        drStrange.Draw(drStrangeShader);
+
         timeStoneShader.use();
         timeStoneShader.setMat4("projection", projection);
         timeStoneShader.setMat4("view", view);
         timeStoneShader.setInt("texture_diffuse1", 0);
         timeStoneShader.setMat4("model", glm::mat4(1.0));
-
         timeStone.Draw(timeStoneShader);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
