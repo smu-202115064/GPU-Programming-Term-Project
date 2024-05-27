@@ -79,6 +79,7 @@ int main()
     glEnable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // build and compile shaders
     // -------------------------
@@ -163,7 +164,7 @@ int main()
     };
     unsigned int skyboxTexture = loadCubemap(skyboxFaces);
 
-    // timestone rotations
+    // Time Stone
     float timeStoneRotateSpeed = 32.0f;
     float timeStoneRotateAngle = 0.0f;
 
@@ -208,7 +209,7 @@ int main()
         drStrangeShader.setMat4("model", model);
         drStrange.Draw(drStrangeShader);
 
-        // time stone
+        // time stone (투명한 건 타임스톤 뿐이므로 정렬 필요없음)
         timeStoneRotateAngle += timeStoneRotateSpeed * deltaTime;
         while (timeStoneRotateAngle > 360.0f) {
             timeStoneRotateAngle -= 360.0f;
