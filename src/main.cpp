@@ -250,6 +250,15 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        float velocity = camera.MovementSpeed * deltaTime;
+        camera.Position += camera.Up * velocity;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        float velocity = camera.MovementSpeed * deltaTime;
+        camera.Position += camera.Up * -velocity;
+    }
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
