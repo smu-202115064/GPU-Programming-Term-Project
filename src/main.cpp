@@ -36,6 +36,68 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+
+void renderDoctorStrange(Shader& shader, Model& model, const glm::mat4& projection, const glm::mat4& view)
+{
+    glm::mat4 transform = glm::mat4(1.0f);
+    transform = glm::translate(transform, glm::vec3(0.0f, -24.0f, 0.0f));
+    transform = glm::scale(transform, glm::vec3(32.0f, 32.0f, 32.0f));
+    shader.use();
+    shader.setMat4("projection", projection);
+    shader.setMat4("view", view);
+    shader.setMat4("model", transform);
+    shader.setInt("texture_diffuse1", 0);
+    model.Draw(shader);
+}
+
+
+void renderTimeStone(Shader& shader, Model& model, const glm::mat4& projection, const glm::mat4& view, float rotateAngle)
+{
+    glm::mat4 transform = glm::mat4(1.0f);
+    transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 32.0f));
+    transform = glm::scale(transform, glm::vec3(1.0f, 1.2f, 1.0f));
+    transform = glm::rotate(transform, glm::radians(rotateAngle), glm::vec3(0.2f, 1.0f, 0.3f));
+    shader.use();
+    shader.setMat4("projection", projection);
+    shader.setMat4("view", view);
+    shader.setMat4("model", transform);
+    shader.setInt("texture_diffuse1", 0);
+    model.Draw(shader);
+}
+
+
+// void renderBrokenGlass(Shader& shader, Model& model, const glm::mat4& projection, const glm::mat4& view, const unsigned int dynEnvMapTextureID)
+// {
+//     return;
+//     glm::mat4 transform = glm::mat4(1.0f);
+//     transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, 48.0f));
+//     transform = glm::scale(transform, glm::vec3(1000.0f, 1000.0f, 1.0f));
+//     shader.use();
+//     shader.setMat4("projection", projection);
+//     shader.setMat4("view", view);
+//     shader.setMat4("model", transform);
+//     shader.setInt("texture_diffuse1", 0);
+//     shader.setInt("texture_normal1", 1);
+//     shader.setInt("environmentMap", dynEnvMapTextureID);
+//     model.Draw(shader);
+// }
+
+
+void renderSkybox(Shader& shader, const glm::mat4& projection, const glm::mat4& view, unsigned int skyboxVAO, unsigned int skyboxTexture)
+{
+    glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+    shader.use();
+    shader.setMat4("projection", projection);
+    shader.setMat4("view", view);
+    glBindVertexArray(skyboxVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+    glDepthFunc(GL_LESS); // set depth function back to default
+}
+
+
 int main()
 {
     // glfw: initialize and configure
@@ -86,17 +148,36 @@ int main()
     Shader timeStoneShader("shader/timestone.vs", "shader/timestone.fs");
     Shader drStrangeShader("shader/dr-strange.vs", "shader/dr-strange.fs");
     Shader skyboxShader("shader/skybox.vs", "shader/skybox.fs");
+    // Shader brokenGlassShader("shader/broken-glass.vs", "shader/broken-glass.fs");
 
     // load models
     // -----------
     Model timeStone("resources/objects/timestone/timestone.obj");
     Model drStrange("resources/objects/dr-strange/Dr Strange.obj");
-
+    // Model brokenGlass("resources/textures/broken-glass/broken-glass.obj");
 
     // set up vertex data (and buffer(s)) and configure vertex attribute
     //Model ourModel("resources/objects/backpack/backpack.obj");
 
     // ------------------------------------------------------------------
+    // float brokenGlassVerticies[] = {
+    //     // positions
+    //     -1.0f, -1.0f, 0.0f, // bottom left
+    //     1.0f, -1.0f, 0.0f, // bottom right
+    //     1.0f, 1.0f, 0.0f, // top right
+    //     -1.0f, 1.0f, 0.0f // top left
+    // };
+
+    // // broken glass VAO
+    // unsigned int brokenGlassVAO, brokenGlassVBO;
+    // glGenVertexArrays(1, &brokenGlassVAO);
+    // glGenBuffers(1, &brokenGlassVBO);
+    // glBindVertexArray(brokenGlassVAO);
+    // glBindBuffer(GL_ARRAY_BUFFER, brokenGlassVBO);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(brokenGlassVerticies), &brokenGlassVerticies, GL_STATIC_DRAW);
+
+    // unsigned int brokenGlassTexture = loadTexture("resources/textures/broken-glass/WireReinforced_N.jpg");
+
     float skyboxVertices[] = {
         // positions
         -1.0f,  1.0f, -1.0f,
@@ -168,10 +249,28 @@ int main()
     float timeStoneRotateSpeed = 32.0f;
     float timeStoneRotateAngle = 0.0f;
 
+    // Dynamic Environment Map
+    unsigned int dynEnvMapTextureID;
+    glGenTextures(1, &dynEnvMapTextureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, dynEnvMapTextureID);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    for (unsigned int i = 0; i < 6; ++i)
+    {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    }
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+
     // shader configuration
     // --------------------
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
+    // brokenGlassShader.use();
+    // brokenGlassShader.setInt("normal", brokenGlassTexture);
 
     // render loop
     // -----------
@@ -195,49 +294,40 @@ int main()
         // configure transformation matrices
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 skyboxView = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
+        glm::mat4 model;
 
-        // draw scene as normal
-
-        // doctor strange
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, -24.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(32.0f, 32.0f, 32.0f));
-        drStrangeShader.use();
-        drStrangeShader.setMat4("projection", projection);
-        drStrangeShader.setMat4("view", view);
-        drStrangeShader.setInt("texture_diffuse1", 0);
-        drStrangeShader.setMat4("model", model);
-        drStrange.Draw(drStrangeShader);
-
-        // time stone (투명한 건 타임스톤 뿐이므로 정렬 필요없음)
+        // time stone 회전각 업데이트
         timeStoneRotateAngle += timeStoneRotateSpeed * deltaTime;
         while (timeStoneRotateAngle > 360.0f) {
             timeStoneRotateAngle -= 360.0f;
         }
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 32.0f));
-        model = glm::scale(model, glm::vec3(0.6f, 1.0f, 0.6f));
-        model = glm::rotate(model, glm::radians(timeStoneRotateAngle), glm::vec3(0.2f, 1.0f, 0.3f));
-        timeStoneShader.use();
-        timeStoneShader.setMat4("projection", projection);
-        timeStoneShader.setMat4("view", view);
-        timeStoneShader.setInt("texture_diffuse1", 0);
-        timeStoneShader.setMat4("model", model);
-        timeStone.Draw(timeStoneShader);
 
-        // draw skybox as last
-        glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
-        skyboxShader.use();
-        view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // remove translation from the view matrix
-        skyboxShader.setMat4("view", view);
-        skyboxShader.setMat4("projection", projection);
-        // skybox cube
-        glBindVertexArray(skyboxVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindVertexArray(0);
-        glDepthFunc(GL_LESS); // set depth function back to default
+        // Dynamic Environment Map Rendering
+        // glBindTexture(GL_TEXTURE_CUBE_MAP, dynEnvMapTextureID);
+        // for (unsigned int i = 0; i < 6; ++i)
+        // {
+        //     unsigned int framebuffer;
+        //     glGenFramebuffers(1, &framebuffer);
+        //     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        //     // 큐브맵 텍스처를 프레임 버퍼의 컬러 첨부물로 연결
+        //     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, dynEnvMapTextureID, 0);
+        //     // 큐브맵 렌더링
+        //     renderDoctorStrange(drStrangeShader, drStrange, projection, view);
+        //     renderTimeStone(timeStoneShader, timeStone, projection, view, timeStoneRotateAngle);
+        //     renderSkybox(skyboxShader, projection, skyboxView, skyboxVAO, skyboxTexture);
+        //     // 프레임 버퍼 정리
+        //     glDeleteFramebuffers(1, &framebuffer);
+        // }
+        // // 큐브맵 텍스처 언바인딩
+        // glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+        // draw scene as normal
+        renderDoctorStrange(drStrangeShader, drStrange, projection, view);
+        renderTimeStone(timeStoneShader, timeStone, projection, view, timeStoneRotateAngle);
+        // renderBrokenGlass(brokenGlassShader, brokenGlass, projection, view, dynEnvMapTextureID);
+        renderSkybox(skyboxShader, projection, skyboxView, skyboxVAO, skyboxTexture);
+
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
