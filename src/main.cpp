@@ -163,6 +163,10 @@ int main()
     };
     unsigned int skyboxTexture = loadCubemap(skyboxFaces);
 
+    // timestone rotations
+    float timeStoneRotateSpeed = 32.0f;
+    float timeStoneRotateAngle = 0.0f;
+
     // shader configuration
     // --------------------
     skyboxShader.use();
@@ -195,8 +199,8 @@ int main()
 
         // doctor strange
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, -8.0f, -4.0f));
-        model = glm::scale(model, glm::vec3(16.0f, 16.0f, 16.0f));
+        model = glm::translate(model, glm::vec3(0.0f, -24.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(32.0f, 32.0f, 32.0f));
         drStrangeShader.use();
         drStrangeShader.setMat4("projection", projection);
         drStrangeShader.setMat4("view", view);
@@ -205,11 +209,19 @@ int main()
         drStrange.Draw(drStrangeShader);
 
         // time stone
+        timeStoneRotateAngle += timeStoneRotateSpeed * deltaTime;
+        while (timeStoneRotateAngle > 360.0f) {
+            timeStoneRotateAngle -= 360.0f;
+        }
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 32.0f));
+        model = glm::scale(model, glm::vec3(0.6f, 1.0f, 0.6f));
+        model = glm::rotate(model, glm::radians(timeStoneRotateAngle), glm::vec3(0.2f, 1.0f, 0.3f));
         timeStoneShader.use();
         timeStoneShader.setMat4("projection", projection);
         timeStoneShader.setMat4("view", view);
         timeStoneShader.setInt("texture_diffuse1", 0);
-        timeStoneShader.setMat4("model", glm::mat4(1.0));
+        timeStoneShader.setMat4("model", model);
         timeStone.Draw(timeStoneShader);
 
         // draw skybox as last
