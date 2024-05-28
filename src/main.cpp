@@ -92,10 +92,11 @@ void renderBrokenGlass(Shader& shader, const glm::mat4& projection, const glm::m
 
 void renderSkybox(Shader& shader, const glm::mat4& projection, const glm::mat4& view, unsigned int skyboxVAO, unsigned int skyboxTexture)
 {
+    glm::mat4 skyView = glm::mat4(glm::mat3(view));
     glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
     shader.use();
     shader.setMat4("projection", projection);
-    shader.setMat4("view", view);
+    shader.setMat4("view", skyView);
     glBindVertexArray(skyboxVAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
@@ -346,10 +347,11 @@ int main()
             // 큐브맵 텍스처를 프레임 버퍼의 컬러 첨부물로 연결
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, dynEnvMapTextureID, 0);
             view = glm::lookAt(camera.Position, camera.Position + dynEnvFrontMats[i], dynEnvUpMats[i]);
+            glm::mat4 skyview = glm::lookAt(-camera.Position, camera.Position + dynEnvFrontMats[i], dynEnvUpMats[i]);
             // 큐브맵 렌더링
+            renderSkybox(skyboxShader, projection, skyview, skyboxVAO, skyboxTexture);
             renderDoctorStrange(drStrangeShader, drStrange, projection, view);
             renderTimeStone(timeStoneShader, timeStone, projection, view, timeStoneRotateAngle);
-            renderSkybox(skyboxShader, projection, skyboxView, skyboxVAO, skyboxTexture);
             // 프레임 버퍼 정리
             glDeleteFramebuffers(1, &framebuffer);
         }
@@ -361,7 +363,7 @@ int main()
         renderDoctorStrange(drStrangeShader, drStrange, projection, view);
         renderTimeStone(timeStoneShader, timeStone, projection, view, timeStoneRotateAngle);
         renderBrokenGlass(brokenGlassShader, projection, view, brokenGlassVAO, dynEnvMapTextureID, brokenGlassTexture);
-        renderSkybox(skyboxShader, projection, skyboxView, skyboxVAO, skyboxTexture);
+        renderSkybox(skyboxShader, projection, view, skyboxVAO, skyboxTexture);
 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
